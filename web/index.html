@@ -1,0 +1,221 @@
+<!DOCTYPE html>
+<html lang="tr">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Focus OS - Komuta Merkezi</title>
+    <script src="https://cdn.jsdelivr.net/npm/apexcharts"></script>
+    <script type="text/javascript" src="/eel.js"></script>
+    <link rel="stylesheet" href="style.css">
+</head>
+<body>
+
+    <!-- ÜST BÖLÜM: 3'LÜ WIDGET IZGARASI -->
+    <div class="top-grid">
+        
+        <!-- SOL WIDGET: Kontrol, Görevler, Bekleme Odası -->
+        <div class="widget-panel" id="left-panel">
+            <div class="panel-title">MDUHA POLAT // SİSTEM ONAYLI</div>
+            <p class="panel-subtitle">Mühendislik Modülü Aktif</p>
+            
+            <input id="taskName" type="text" placeholder="Görev Adı (Örn: C Programlama)" class="input-field">
+            <input id="taskHours" type="number" placeholder="Süre (Dakika)" class="input-field">
+            <button class="btn btn-primary mb-sm" onclick="addTaskToWaitingRoom()">GÖREVİ LİSTEYE EKLE</button>
+
+            <div class="section-label">Bekleme Odası</div>
+            <div id="waiting-room" class="scroll-list"></div>
+
+            <div class="mt-auto" style="display:flex;flex-direction:column;gap:8px;padding-top:10px;">
+                <button class="btn btn-primary btn-small" onclick="openScheduleModal()" style="width:100%">📅 DERS PROGRAMI</button>
+                <button class="btn btn-primary btn-small" onclick="openSmartRepeatModal()" style="width:100%">🧠 AKILLI TEKRAR</button>
+                <button class="btn btn-danger" onclick="endDayProtocol()">SİSTEMİ UYKUYA AL (GÜNÜ BİTİR)</button>
+            </div>
+        </div>
+
+        <!-- ORTA WIDGET: İki Modlu Aktif Odak Sayacı -->
+        <div class="widget-panel" id="center-panel">
+            <div class="flex-between">
+                <div class="panel-title">AKTİF ODAK</div>
+                <button id="focusBtn" class="btn btn-primary btn-small" onclick="startFocus()">
+                    <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="display:inline;vertical-align:middle;margin-right:4px;">
+                        <path d="M5 22h14"/><path d="M5 2h14"/>
+                        <path d="M17 22v-4.172a2 2 0 0 0-.586-1.414L12 12l-4.414 4.414A2 2 0 0 0 7 17.828V22"/>
+                        <path d="M7 2v4.172a2 2 0 0 0 .586 1.414L12 12l4.414-4.414A2 2 0 0 0 17 6.172V2"/>
+                    </svg>
+                    BAŞLAT
+                </button>
+            </div>
+
+            <div class="mode-selector" style="margin-top:12px;">
+                <button class="mode-btn active" id="mode-timer" onclick="switchMode('timer')">
+                    <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="display:inline;vertical-align:middle;margin-right:3px;">
+                        <path d="M5 22h14"/><path d="M5 2h14"/>
+                        <path d="M17 22v-4.172a2 2 0 0 0-.586-1.414L12 12l-4.414 4.414A2 2 0 0 0 7 17.828V22"/>
+                        <path d="M7 2v4.172a2 2 0 0 0 .586 1.414L12 12l4.414-4.414A2 2 0 0 0 17 6.172V2"/>
+                    </svg>
+                    ZAMANLAYICI
+                </button>
+                <button class="mode-btn" id="mode-stopwatch" onclick="switchMode('stopwatch')">
+                    <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="display:inline;vertical-align:middle;margin-right:3px;">
+                        <circle cx="12" cy="13" r="8"/><path d="M12 9v4l2 2"/>
+                        <path d="M5 3L2 6"/><path d="M22 6l-3-3"/><path d="M12 2v3"/>
+                    </svg>
+                    KRONOMETRE
+                </button>
+            </div>
+
+            <!-- Timer preset + custom input -->
+            <div id="timer-setup">
+                <div class="preset-row">
+                    <button class="preset-btn" onclick="setPreset(15)">15</button>
+                    <button class="preset-btn active" onclick="setPreset(25)">25</button>
+                    <button class="preset-btn" onclick="setPreset(45)">45</button>
+                    <button class="preset-btn" onclick="setPreset(60)">60</button>
+                    <input type="number" id="customMinutes" class="custom-time-input" placeholder="dk" onchange="setCustomTime()">
+                </div>
+            </div>
+
+            <!-- SVG Çemberi -->
+            <div class="timer-container">
+                <svg class="timer-svg" viewBox="0 0 200 200">
+                    <circle cx="100" cy="100" r="80" class="timer-bg-circle"></circle>
+                    <circle id="timer-circle" cx="100" cy="100" r="80" class="timer-progress"
+                            stroke-dasharray="502.65" stroke-dashoffset="0"></circle>
+                </svg>
+                <div class="timer-text-group">
+                    <span id="focus-timer-text" class="timer-digits">25:00</span>
+                    <span id="timer-mode-label" class="timer-label">ZAMANLAYICI</span>
+                </div>
+            </div>
+            
+            <div id="timer-controls" class="timer-controls">
+                <button id="pauseBtn" onclick="togglePause()" class="btn btn-ghost btn-small">DURAKLAT</button>
+                <button onclick="resetTimer()" class="btn btn-danger btn-small">BİTİR</button>
+            </div>
+
+            <div class="section-label" style="margin-top:8px;">Aktif Deadline'lar</div>
+            <div id="active-deadlines" class="scroll-list" style="max-height:100px;"></div>
+        </div>
+
+        <!-- SAĞ WIDGET: Siber Gardiyan + Canlı Radar -->
+        <div class="widget-panel" id="right-panel">
+            <div class="panel-title">SİBER GARDİYAN</div>
+            
+            <div id="alert-box" class="alert-box" style="margin-top:12px;">
+                <p id="alert-text" class="alert-text">ANOMALİ YOK</p>
+            </div>
+
+            <div class="section-label">Canlı Radar</div>
+            <div id="blacklist-ul" class="scroll-list"></div>
+
+            <div class="mt-auto" style="display:flex;flex-direction:column;gap:8px;padding-top:10px;">
+                <button onclick="document.getElementById('exePicker').click()" class="btn btn-primary">+ .EXE İŞARETLE</button>
+                <button onclick="openUsageReport()" class="btn btn-ghost">📊 EKRAN SÜRESİ RAPORU</button>
+            </div>
+            <input type="file" id="exePicker" accept=".exe" style="display:none;">
+        </div>
+    </div>
+
+    <!-- ALT BÖLÜM: 7 GÜNLÜK GRAFİK -->
+    <div class="widget-panel bottom-section">
+        <div class="flex-between mb-sm">
+            <div>
+                <div class="panel-title">GEÇMİŞ MODÜLÜ (SON 7 GÜN)</div>
+                <p class="panel-subtitle" style="margin-bottom:0;">Toplam Odaklanma (Dakika)</p>
+            </div>
+            <button class="btn btn-ghost btn-small" onclick="openAllTimeModal()">📋 TÜM ZAMANLAR</button>
+        </div>
+        <div id="historyChart" class="chart-container"></div>
+    </div>
+
+    <!-- ===== MODAL: DERS PROGRAMI ===== -->
+    <div id="schedule-modal" class="modal-overlay">
+        <div class="modal-box" style="max-width:620px;position:relative;">
+            <button class="modal-close" onclick="closeModal('schedule-modal')">✕</button>
+            <div class="modal-title">📅 Haftalık Ders Programı</div>
+            <div class="modal-desc">Derslerinizi girin. Sistem bugün hangi derslerin olduğunu otomatik bilecek.</div>
+            
+            <div class="schedule-tabs" id="schedule-tabs"></div>
+            <div id="schedule-entries"></div>
+            
+            <div style="display:flex;gap:8px;margin-top:16px;">
+                <button class="btn btn-ghost btn-small" onclick="addScheduleRow()">+ DERS EKLE</button>
+                <button class="btn btn-success btn-small" id="schedSaveBtn" onclick="saveSchedule()" style="margin-left:auto;">KAYDET & GÖREV OLUŞTUR</button>
+            </div>
+        </div>
+    </div>
+
+    <!-- ===== MODAL: AKILLI TEKRAR ===== -->
+    <div id="smart-modal" class="modal-overlay">
+        <div class="modal-box" style="position:relative;">
+            <button class="modal-close" onclick="closeModal('smart-modal')">✕</button>
+            <div class="modal-title">🧠 Akıllı Tekrar Asistanı</div>
+            <div class="modal-desc">Bugünkü derslerinize göre çalışma planı oluşturun.</div>
+            
+            <div id="today-lessons-info" style="margin-bottom:16px;"></div>
+
+            <div class="strategy-card" onclick="applyStrategy('daily')">
+                <div class="strategy-title">📌 Her Derse Akşam Tekrar</div>
+                <div class="strategy-desc">Her dersin gününe 45 dk'lık tekrar görevi atar.</div>
+            </div>
+            <div class="strategy-card" onclick="applyStrategy('spaced')">
+                <div class="strategy-title">🧬 Unutma Eğrisi (1-3-7)</div>
+                <div class="strategy-desc">1, 3 ve 7. günlere bölerek tekrar görevleri atar.</div>
+            </div>
+            <div class="strategy-card" onclick="applyStrategy('none')">
+                <div class="strategy-title">✏️ Tekrar Ekleme (Manuel)</div>
+                <div class="strategy-desc">Sadece kendi görevlerinizi manuel girin.</div>
+            </div>
+
+            <div class="section-label" style="margin-top:16px;">Bugünkü Tekrar Görevleri</div>
+            <div id="smart-tasks-list"></div>
+            
+            <div style="display:flex;gap:8px;margin-top:12px;">
+                <input id="manualTaskName" type="text" placeholder="Görev adı" class="input-field" style="margin-bottom:0;flex:1;">
+                <input id="manualTaskMin" type="number" placeholder="dk" class="custom-time-input" style="width:60px;">
+                <button class="btn btn-primary btn-small" onclick="addManualSmartTask()">EKLE</button>
+            </div>
+        </div>
+    </div>
+
+    <!-- ===== MODAL: EKRAN SÜRESİ RAPORU ===== -->
+    <div id="usage-modal" class="modal-overlay">
+        <div class="modal-box" style="position:relative;">
+            <button class="modal-close" onclick="closeModal('usage-modal')">✕</button>
+            <div class="modal-title">📊 Günlük Ekran Süresi Raporu</div>
+            <div class="modal-desc">Kara listedeki uygulamaların bugünkü kullanım süreleri.</div>
+            <table class="report-table">
+                <thead><tr><th>Uygulama</th><th>Toplam Süre</th></tr></thead>
+                <tbody id="usage-table-body"></tbody>
+            </table>
+        </div>
+    </div>
+
+    <!-- ===== MODAL: GÜNÜ KAPAT ===== -->
+    <div id="endday-modal" class="modal-overlay">
+        <div class="modal-box" style="position:relative;text-align:center;">
+            <button class="modal-close" onclick="closeModal('endday-modal')">✕</button>
+            <div class="modal-title">🌙 Gün Sona Erdi</div>
+            <div id="endday-stat" class="end-day-stat">0</div>
+            <div class="end-day-unit">DAKİKA ODAKLANDIN</div>
+            <div id="endday-message" class="end-day-message"></div>
+            <button class="btn btn-primary" onclick="closeModal('endday-modal')">TAMAM</button>
+        </div>
+    </div>
+
+    <!-- ===== MODAL: TÜM ZAMANLARIN VERİ TABLOSU ===== -->
+    <div id="alltime-modal" class="modal-overlay">
+        <div class="modal-box" style="position:relative;max-width:480px;">
+            <button class="modal-close" onclick="closeModal('alltime-modal')">✕</button>
+            <div class="modal-title">📋 Tüm Zamanların Verileri</div>
+            <div class="modal-desc">Uygulamanın kullanıldığı ilk günden beri tüm çalışma logları.</div>
+            <table class="report-table">
+                <thead><tr><th>Tarih</th><th>Gün</th><th>Toplam (dk)</th></tr></thead>
+                <tbody id="alltime-table-body"></tbody>
+            </table>
+        </div>
+    </div>
+
+    <script src="app.js"></script>
+</body>
+</html>
