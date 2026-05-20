@@ -1,7 +1,35 @@
+import os
 import sqlite3
 from datetime import datetime, timedelta
+from pathlib import Path
 
-DB_NAME = "guardian.db"
+APP_NAME = "FocusOS"
+
+
+def _default_data_dir():
+    """Return a per-user writable data directory for DB files."""
+    override = os.environ.get("FOCUSOS_DATA_DIR")
+    if override:
+        return Path(override).expanduser()
+
+    if os.name == "nt":
+        base = os.environ.get("APPDATA") or os.environ.get("LOCALAPPDATA")
+        if base:
+            return Path(base) / APP_NAME
+
+    xdg_data_home = os.environ.get("XDG_DATA_HOME")
+    if xdg_data_home:
+        return Path(xdg_data_home) / APP_NAME
+    return Path.home() / ".local" / "share" / APP_NAME
+
+
+DATA_DIR = _default_data_dir()
+DATA_DIR.mkdir(parents=True, exist_ok=True)
+DB_NAME = str(DATA_DIR / "guardian.db")
+
+
+def get_db_path():
+    return DB_NAME
 
 def init_db():
     """Veritabanını ve tabloları güvenli bir şekilde oluşturur."""
