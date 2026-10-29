@@ -4,218 +4,835 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Focus OS - Focus Studio</title>
-    <script src="https://cdn.jsdelivr.net/npm/apexcharts"></script>
-    <link rel="stylesheet" href="style.css">
+    <link rel="stylesheet" href="style.css?v=5">
 </head>
 <body>
     <main class="app-shell">
+        <!-- HEADER -->
         <header class="studio-header">
-            <div>
-                <div class="app-kicker">Focus Studio</div>
-                <h1>Bugünün çalışma alanı</h1>
-                <p class="studio-copy">Görevlerini sıraya al, odak zamanını başlat ve dikkat dağıtan uygulamaları sakin bir panelden izle.</p>
+            <div class="header-left">
+                <a href="#" class="logo-serif">Focus Studio</a>
+                <nav class="nav-links">
+                    <button class="nav-link nav-button active" id="nav-focus" onclick="closeRoadmap()">Aktif Odak</button>
+                    <button class="nav-link nav-button" id="nav-routines" onclick="openRoutines()">Rutinler</button>
+                    <button class="nav-link nav-button" id="nav-roadmap" onclick="openRoadmap()">Yol Haritası</button>
+                    <button class="nav-link nav-button" onclick="openPlanner()">Planlayıcı</button>
+                    <button class="nav-link nav-button" onclick="toggleSidebarTab('guardian')">Dikkat Takibi</button>
+                    <button class="nav-link nav-button" onclick="openDisciplineDashboard()">Disiplin</button>
+                    <button class="nav-link nav-button" onclick="openWeeklyReviewManual()">Haftalık Özet</button>
+                </nav>
             </div>
-            <div class="today-card">
-                <span class="today-label">Oturum</span>
-                <strong>Hazır</strong>
+            <div class="header-right">
+                <button class="header-icon-btn" onclick="toggleSidebar()" title="Ayarlar">⚙️</button>
+                <div class="profile-hover-area" onmouseenter="ensureAvatarProfiles()">
+                    <button id="user-avatar" class="avatar-circle" title="Profil ve veri ayarları" onclick="openPreferences()" aria-haspopup="menu">KU</button>
+                    <div class="profile-quick-menu" role="menu" aria-label="Dikkat profilleri">
+                        <div class="profile-quick-title">Dikkat profili</div>
+                        <div id="avatar-profile-list" class="avatar-profile-list">
+                            <div class="profile-quick-empty">Profiller yükleniyor…</div>
+                        </div>
+                        <button class="profile-settings-link" onclick="openPreferences()">Profil ve Veri Merkezi →</button>
+                    </div>
+                </div>
             </div>
         </header>
 
-        <section class="top-grid">
+        <!-- MAIN LAYOUT GRID -->
+        <div class="main-grid">
+            <!-- LEFT PANEL: GÖREVLER -->
             <div class="widget-panel" id="left-panel">
-                <div class="panel-title">Plan</div>
-                <p class="panel-subtitle">MDUHA POLAT için günlük çalışma akışı</p>
+                <button class="panel-collapse-button" onclick="toggleFocusPanel('left')" title="Bugünün çalışma alanını daralt" aria-label="Bugünün çalışma alanını aç veya kapat">‹</button>
+                <div class="panel-kicker">01 / GÖREVLER</div>
+                <div class="panel-title">Bugünün çalışma alanı</div>
+                <div id="weekly-priorities-bar" class="weekly-priorities-bar" style="display:none;"></div>
 
-                <input id="taskName" type="text" placeholder="Görev adı (Örn: C Programlama)" class="input-field">
-                <input id="taskHours" type="number" placeholder="Süre (dakika)" class="input-field">
-                <button class="btn btn-primary mb-sm" onclick="addTaskToWaitingRoom()">Görevi listeye ekle</button>
-
-                <div class="section-label">Bekleme odası</div>
-                <div id="waiting-room" class="scroll-list"></div>
-
-                <div class="action-stack mt-auto">
-                    <button class="btn btn-soft btn-small" onclick="openScheduleModal()">Ders programı</button>
-                    <button class="btn btn-soft btn-small" onclick="openSmartRepeatModal()">Akıllı tekrar</button>
-                    <button id="checkinToggleBtn" class="btn btn-ghost btn-small" onclick="toggleCheckinMode()">El sallama modu: kapalı</button>
-                    <button class="btn btn-danger" onclick="endDayProtocol()">Günü bitir</button>
+                <!-- Combined Unified Scroll List -->
+                <div id="tasks-list" class="scroll-list">
+                    <!-- JS renders: Morning routines, Tasks, Evening routines -->
                 </div>
+
+                <!-- Bottom Add Button -->
+                <button class="btn btn-primary btn-full mt-auto" onclick="openAddTaskModal()">+ YENİ GÖREV EKLE</button>
             </div>
 
+            <!-- CENTER PANEL: TIMER -->
             <div class="widget-panel focus-panel" id="center-panel">
-                <div class="flex-between">
-                    <div>
-                        <div class="panel-title">Aktif odak</div>
-                        <p class="panel-subtitle">Derin çalışma oturumu</p>
-                    </div>
-                    <div class="focus-actions">
-                        <div id="session-status" class="session-status-badge" style="display:none;">Kilitli</div>
-                        <button id="focusBtn" class="btn btn-primary btn-small" onclick="startFocus()">Başlat</button>
-                    </div>
-                </div>
-
-                <div class="mode-selector">
-                    <button class="mode-btn active" id="mode-timer" onclick="switchMode('timer')">Zamanlayıcı</button>
-                    <button class="mode-btn" id="mode-stopwatch" onclick="switchMode('stopwatch')">Kronometre</button>
-                </div>
-
-                <div id="timer-setup">
-                    <div class="preset-row">
-                        <button class="preset-btn" onclick="setPreset(15)">15</button>
-                        <button class="preset-btn active" onclick="setPreset(25)">25</button>
-                        <button class="preset-btn" onclick="setPreset(45)">45</button>
-                        <button class="preset-btn" onclick="setPreset(60)">60</button>
-                        <input type="number" id="customMinutes" class="custom-time-input" placeholder="dk" onchange="setCustomTime()">
-                    </div>
-                </div>
-
-                <div class="timer-container">
-                    <svg class="timer-svg" viewBox="0 0 200 200" aria-hidden="true">
-                        <circle cx="100" cy="100" r="80" class="timer-bg-circle"></circle>
-                        <circle id="timer-circle" cx="100" cy="100" r="80" class="timer-progress"
-                                stroke-dasharray="502.65" stroke-dashoffset="0"></circle>
+                <!-- SVG Wave Glow Background -->
+                <div class="sine-wave-container">
+                    <svg class="sine-wave-svg" viewBox="0 0 800 200" preserveAspectRatio="none">
+                        <path d="M 0 100 Q 200 50, 400 100 T 800 100" fill="none" stroke="rgba(235, 191, 74, 0.08)" stroke-width="2"></path>
+                        <path d="M 0 100 Q 200 150, 400 100 T 800 100" fill="none" stroke="rgba(235, 191, 74, 0.04)" stroke-width="1.5"></path>
                     </svg>
-                    <div class="timer-text-group">
-                        <span id="focus-timer-text" class="timer-digits">25:00</span>
-                        <span id="timer-mode-label" class="timer-label">Zamanlayıcı</span>
+                </div>
+
+                <div class="timer-wrapper">
+                    <!-- Mode Switcher -->
+                    <div class="mode-selector">
+                        <button class="mode-btn active" id="mode-timer" onclick="switchMode('timer')">Zamanlayıcı</button>
+                        <button class="mode-btn" id="mode-stopwatch" onclick="switchMode('stopwatch')">Kronometre</button>
+                    </div>
+
+                    <!-- Preset Selectors (Visible only when configuring) -->
+                    <div id="timer-setup">
+                        <div class="preset-row">
+                            <button class="preset-btn" onclick="setPreset(15)">15</button>
+                            <button class="preset-btn active" onclick="setPreset(25)">25</button>
+                            <button class="preset-btn" onclick="setPreset(45)">45</button>
+                            <button class="preset-btn" onclick="setPreset(60)">60</button>
+                            <input type="number" id="customMinutes" class="custom-time-input" placeholder="dk" onchange="setCustomTime()">
+                        </div>
+                    </div>
+
+                    <!-- Circular Progress Ring -->
+                    <div class="timer-container">
+                        <svg class="timer-svg" viewBox="0 0 200 200" aria-hidden="true">
+                            <circle cx="100" cy="100" r="80" class="timer-bg-circle"></circle>
+                            <circle id="timer-circle" cx="100" cy="100" r="80" class="timer-progress"
+                                    stroke-dasharray="502.65" stroke-dashoffset="0"></circle>
+                        </svg>
+                        <div class="timer-text-group">
+                            <span id="focus-timer-text" class="timer-digits">25:00</span>
+                            <span id="timer-mode-label" class="timer-label">Zamanlayıcı</span>
+                        </div>
+                    </div>
+
+                    <!-- Controls -->
+                    <div id="timer-controls" class="timer-controls">
+                        <!-- Left reset -->
+                        <button onclick="resetTimer()" class="control-btn-circle" title="Sıfırla">
+                            <svg viewBox="0 0 24 24" width="20" height="20" fill="none" stroke="currentColor" stroke-width="2"><path d="M3 12a9 9 0 1 0 9-9 9.75 9.75 0 0 0-6.74 2.74L3 8"/><path d="M3 3v5h5"/></svg>
+                        </button>
+                        <!-- Center Play/Pause -->
+                        <button id="focusBtn" onclick="startFocus()" class="control-btn-circle main-btn" title="Başlat">
+                            <span id="main-btn-icon">▶</span>
+                        </button>
+                        <!-- Right Skip -->
+                        <button id="pauseBtn" onclick="togglePause()" class="control-btn-circle" style="display:none;" title="Duraklat">
+                            ⏸
+                        </button>
+                        <button id="skipBtn" onclick="skipTimer()" class="control-btn-circle" title="Sonraki Görev / Geç">
+                            ⏭
+                        </button>
+                    </div>
+
+                    <!-- Subject Input -->
+                    <input id="studySubjectInput" type="text" placeholder="Ne çalışıyorsun?" class="study-subject-input">
+
+                    <!-- System Status Badge -->
+                    <div class="status-pill-indicator" id="focus-runtime-status">
+                        <span class="status-dot"></span>
+                        Odak koruması beklemede
+                    </div>
+                </div>
+            </div>
+
+            <!-- RIGHT PANEL: ÇALIŞMA PANELİ -->
+            <div class="widget-panel" id="right-panel">
+                <button class="panel-collapse-button" onclick="toggleFocusPanel('right')" title="Çalışma panelini daralt" aria-label="Çalışma panelini aç veya kapat">›</button>
+                <div class="panel-kicker">02 / İLERLEME</div>
+                <div class="panel-title">Çalışma Paneli</div>
+                <p class="panel-subtitle">Çalışma serini koru ve günlük notlarını tut.</p>
+
+                <!-- Streak Widget -->
+                <div class="streak-widget" id="streak-widget">
+                    <div class="streak-flame-container">
+                        <div class="streak-flame" id="streak-flame">🔥</div>
+                    </div>
+                    <div class="streak-info">
+                        <div class="streak-number" id="streak-number">0</div>
+                        <div class="streak-label">GÜN SERİSİ</div>
+                    </div>
+                    <div class="streak-progress-section">
+                        <div class="streak-progress-label">
+                            <span>Bugünkü ilerleme</span>
+                            <span id="streak-progress-text" class="analysis-val">0 / 60 dk</span>
+                        </div>
+                        <div class="streak-progress-bar">
+                            <div id="streak-progress-fill" class="streak-progress-fill"></div>
+                        </div>
+                        <div id="streak-motivation" class="streak-motivation">Bugün 1 saat çalışarak seriyi uzat!</div>
+                    </div>
+                    <div class="off-day-section">
+                        <select id="off-day-date" class="off-day-date" title="OFF DAY uygulanacak gün" aria-label="OFF DAY uygulanacak gün"></select>
+                        <button id="off-day-btn" class="btn btn-offday" onclick="useOffDay()">OFF DAY</button>
+                        <span id="off-day-status" class="off-day-status">Bu hafta: mevcut</span>
                     </div>
                 </div>
 
-                <div id="timer-controls" class="timer-controls">
-                    <button id="pauseBtn" onclick="togglePause()" class="btn btn-ghost btn-small">Duraklat</button>
-                    <button onclick="resetTimer()" class="btn btn-danger btn-small">Bitir</button>
+                <!-- Weekly Rhythm Chart -->
+                <div class="analysis-section" style="margin-top: 24px;">
+                    <div class="analysis-label-row">
+                        <span>Haftalık Ritim</span>
+                    </div>
+                    <div id="historyChart" class="chart-container-right"></div>
                 </div>
 
-                <div class="section-label">Aktif deadline'lar</div>
-                <div id="active-deadlines" class="scroll-list compact-list"></div>
+                <!-- Bottom Actions -->
+                <div class="right-panel-actions">
+                    <button class="btn btn-journal btn-full" onclick="openJournal()">
+                        <span class="journal-btn-icon">📓</span> Günlük Defterim
+                    </button>
+                    <button class="btn btn-danger btn-full" onclick="endDayProtocol()">Günü sonlandır</button>
+                </div>
             </div>
+        </div>
 
-            <div class="widget-panel" id="right-panel">
-                <div class="panel-title">Dikkat takibi</div>
-                <p class="panel-subtitle">Canlı uygulama kontrolü</p>
+        <!-- SIDEBAR BACKDROP OVERLAY -->
+        <div id="sidebar-overlay" class="sidebar-overlay" onclick="toggleSidebar()"></div>
 
-                <div id="alert-box" class="alert-box">
-                    <p id="alert-text" class="alert-text">Anomali yok</p>
-                </div>
-
-                <div class="section-label">Canlı radar</div>
-                <div id="blacklist-ul" class="scroll-list"></div>
-
-                <div class="action-stack mt-auto">
-                    <button onclick="document.getElementById('exePicker').click()" class="btn btn-primary">.exe işaretle</button>
-                    <button onclick="openUsageReport()" class="btn btn-ghost">Ekran süresi raporu</button>
-                </div>
-                <input type="file" id="exePicker" accept=".exe" style="display:none;">
+        <!-- SIDEBAR -->
+        <div id="app-sidebar" class="app-sidebar">
+            <div class="sidebar-header">
+                <span class="sidebar-title">Ayarlar & Geçmiş</span>
+                <button class="sidebar-close-btn" onclick="toggleSidebar()">✕</button>
             </div>
-        </section>
+            
+            <div class="sidebar-tabs">
+                <button id="tab-btn-alltime" class="sidebar-tab-btn active" onclick="switchSidebarTab('alltime')">Tüm Zamanlar</button>
+                <button id="tab-btn-guardian" class="sidebar-tab-btn" onclick="switchSidebarTab('guardian')">Siber Gardiyan</button>
+            </div>
+            
+            <div class="sidebar-content">
+                <!-- Tab: Tüm Zamanlar -->
+                <div id="sidebar-tab-alltime" class="sidebar-tab-content active">
+                    <div class="modal-desc">Geçmiş çalışma verilerinizi inceleyin ve süreleri düzenlemek için üzerlerine tıklayın.</div>
+                    
+                    <!-- Action button for repeat tasks inside sidebar -->
+                    <button class="btn btn-soft btn-full mb-sm" onclick="openSmartRepeatModal()" style="margin-bottom: 20px;">🤖 AKILLI TEKRAR ASİSTANI</button>
+                    
+                    <table class="report-table">
+                        <thead>
+                            <tr>
+                                <th>Tarih</th>
+                                <th>Gün</th>
+                                <th>Toplam Süre</th>
+                            </tr>
+                        </thead>
+                        <tbody id="alltime-table-body">
+                            <!-- Rendered via JS -->
+                        </tbody>
+                    </table>
+                </div>
+                
+                <!-- Tab: Siber Gardiyan -->
+                <div id="sidebar-tab-guardian" class="sidebar-tab-content">
+                    <div class="modal-desc">Odaklanmanızı engelleyen uygulamaları (.exe) kara listeye ekleyin.</div>
+                    
+                    <div class="inline-form">
+                        <button onclick="document.getElementById('exePicker').click()" class="btn btn-primary btn-full">📁 UYGULAMA (.EXE) EKLE</button>
+                        <input type="file" id="exePicker" accept=".exe" style="display:none;">
+                    </div>
 
-        <section class="widget-panel bottom-section">
-            <div class="flex-between mb-sm">
+                    <!-- El Sallama Modu Süre Sıklığı Ayarı -->
+                    <div class="section-label">El Sallama Modu (Check-in)</div>
+                    <div class="inline-form" style="align-items: center; justify-content: space-between;">
+                        <span style="font-size:12px; color:var(--text-muted);">Kontrol sıklığı (dk):</span>
+                        <div style="display: flex; gap: 8px; align-items: center;">
+                            <input id="checkinIntervalInput" type="number" class="custom-time-input" value="10" min="1" style="width: 60px;">
+                            <button id="checkinToggleBtn" class="btn btn-ghost btn-small" onclick="toggleCheckinMode()">El sallama modu: kapalı</button>
+                        </div>
+                    </div>
+
+                    <div class="section-label">Ekran Süresi Raporu</div>
+                    <button class="btn btn-ghost btn-full" onclick="openUsageReport()" style="margin-bottom: 20px;">📊 Kara Liste Ekran Süresi Raporu</button>
+                    
+                    <div class="section-label">Canlı Karaliste Listesi</div>
+                    <div id="blacklist-ul" style="display: flex; flex-direction: column; gap: 10px;">
+                        <!-- Blacklist apps rendered here -->
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- MODAL: YENİ GÖREV / ETKİNLİK EKLEME -->
+        <div id="add-task-modal" class="modal-overlay">
+            <div class="modal-box">
+                <button class="modal-close" onclick="closeModal('add-task-modal')">×</button>
+                <div class="modal-title">Yeni Öğe Ekle</div>
+                <div class="modal-desc">Yeni bir odaklanma görevi veya geri sayımı olan önemli bir tarih ekleyin.</div>
+
+                <div class="sidebar-tabs" style="border-radius: 8px; overflow: hidden; margin-bottom: 20px;">
+                    <button id="add-tab-task" class="sidebar-tab-btn active" onclick="switchAddTab('task')">Odak Görevi</button>
+                    <button id="add-tab-date" class="sidebar-tab-btn" onclick="switchAddTab('date')">Önemli Tarih</button>
+                </div>
+
+                <!-- Form: Odak Görevi -->
+                <div id="add-form-task">
+                    <div class="inline-form" style="flex-direction: column; gap: 12px; margin-bottom: 0;">
+                        <div>
+                            <label class="section-label" style="margin: 0 0 6px; display: block;">Görev Adı</label>
+                            <input id="taskName" type="text" placeholder="Örn: C Programlama Çalışması" class="input-field">
+                        </div>
+                        <div>
+                            <label class="section-label" style="margin: 0 0 6px; display: block;">Çalışma Süresi (Dakika)</label>
+                            <input id="taskHours" type="number" placeholder="Dakika girin (Örn: 45)" class="input-field">
+                        </div>
+                        <button class="btn btn-primary btn-full" onclick="addNewFocusTask()" style="margin-top: 10px;">GÖREVİ LİSTEYE EKLE</button>
+                    </div>
+                </div>
+
+                <!-- Form: Önemli Tarih -->
+                <div id="add-form-date" style="display: none;">
+                    <div class="inline-form" style="flex-direction: column; gap: 12px; margin-bottom: 0;">
+                        <div>
+                            <label class="section-label" style="margin: 0 0 6px; display: block;">Etkinlik / Sınav Adı</label>
+                            <input id="importantDateName" type="text" placeholder="Örn: Matematik Vize Sınavı" class="input-field">
+                        </div>
+                        <div>
+                            <label class="section-label" style="margin: 0 0 6px; display: block;">Tarih</label>
+                            <input id="importantDatePicker" type="date" class="input-field">
+                        </div>
+                        <button class="btn btn-primary btn-full" onclick="addNewImportantDate()" style="margin-top: 10px;">ETKİNLİĞİ EKLE</button>
+                    </div>
+                </div>
+
+                <!-- Form: Rutin Ekle -->
+                <div id="add-form-routine" style="display: none;">
+                    <div class="inline-form" style="flex-direction: column; gap: 12px; margin-bottom: 0;">
+                        <div>
+                            <label class="section-label" style="margin: 0 0 6px; display: block;">Zaman Dilimi</label>
+                            <div class="period-tabs">
+                                <button class="period-tab active" data-period="morning" onclick="selectRoutinePeriod('morning')">🌅 SABAH</button>
+                                <button class="period-tab" data-period="noon" onclick="selectRoutinePeriod('noon')">☀️ ÖĞLEN</button>
+                                <button class="period-tab" data-period="evening" onclick="selectRoutinePeriod('evening')">🌙 AKŞAM</button>
+                            </div>
+                        </div>
+                        <div>
+                            <label class="section-label" style="margin: 0 0 6px; display: block;">Rutin Adı</label>
+                            <input id="routineName" type="text" placeholder="Örn: 10 dk meditasyon" class="input-field">
+                        </div>
+                        <div>
+                            <label class="section-label" style="margin: 0 0 6px; display: block;">Süre (Dakika)</label>
+                            <input id="routineDuration" type="number" placeholder="5" class="input-field" value="5">
+                        </div>
+                        <div>
+                            <label class="section-label" style="margin: 0 0 6px; display: block;">İkon</label>
+                            <div id="emoji-picker" class="emoji-picker-grid">
+                                <button type="button" class="emoji-btn active" onclick="selectRoutineEmoji(this, '💧')">💧</button>
+                                <button type="button" class="emoji-btn" onclick="selectRoutineEmoji(this, '🧘')">🧘</button>
+                                <button type="button" class="emoji-btn" onclick="selectRoutineEmoji(this, '📖')">📖</button>
+                                <button type="button" class="emoji-btn" onclick="selectRoutineEmoji(this, '✏️')">✏️</button>
+                                <button type="button" class="emoji-btn" onclick="selectRoutineEmoji(this, '🏃')">🏃</button>
+                                <button type="button" class="emoji-btn" onclick="selectRoutineEmoji(this, '🎯')">🎯</button>
+                                <button type="button" class="emoji-btn" onclick="selectRoutineEmoji(this, '🌙')">🌙</button>
+                                <button type="button" class="emoji-btn" onclick="selectRoutineEmoji(this, '☀️')">☀️</button>
+                                <button type="button" class="emoji-btn" onclick="selectRoutineEmoji(this, '📝')">📝</button>
+                                <button type="button" class="emoji-btn" onclick="selectRoutineEmoji(this, '💪')">💪</button>
+                                <button type="button" class="emoji-btn" onclick="selectRoutineEmoji(this, '🧠')">🧠</button>
+                                <button type="button" class="emoji-btn" onclick="selectRoutineEmoji(this, '🎵')">🎵</button>
+                            </div>
+                        </div>
+                        <div>
+                            <label class="section-label" style="margin: 0 0 6px; display: block;">Aktif Günler</label>
+                            <div class="day-toggle-row">
+                                <button type="button" class="day-toggle active" data-day="1" onclick="toggleRoutineDay(this)">Pzt</button>
+                                <button type="button" class="day-toggle active" data-day="2" onclick="toggleRoutineDay(this)">Sal</button>
+                                <button type="button" class="day-toggle active" data-day="3" onclick="toggleRoutineDay(this)">Çar</button>
+                                <button type="button" class="day-toggle active" data-day="4" onclick="toggleRoutineDay(this)">Per</button>
+                                <button type="button" class="day-toggle active" data-day="5" onclick="toggleRoutineDay(this)">Cum</button>
+                                <button type="button" class="day-toggle active" data-day="6" onclick="toggleRoutineDay(this)">Cts</button>
+                                <button type="button" class="day-toggle active" data-day="7" onclick="toggleRoutineDay(this)">Paz</button>
+                            </div>
+                        </div>
+                        <button class="btn btn-primary btn-full" onclick="saveNewRoutine()" style="margin-top: 10px;">RUTİNİ LİSTEYE EKLE</button>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- MODAL: AKILLI TEKRAR -->
+        <div id="smart-modal" class="modal-overlay">
+            <div class="modal-box">
+                <button class="modal-close" onclick="closeModal('smart-modal')">×</button>
+                <div class="modal-title">Akıllı Tekrar Asistanı</div>
+                <div class="modal-desc">Bugünkü derslerinize göre tekrar görevleri oluşturun.</div>
+
+                <div id="today-lessons-info" class="modal-info"></div>
+
+                <div style="display: flex; flex-direction: column; gap: 12px; margin-bottom: 20px;">
+                    <button class="btn btn-ghost btn-full" onclick="applyStrategy('daily')" style="justify-content: flex-start; text-align: left; height: auto; padding: 14px 20px; flex-direction: column; align-items: flex-start;">
+                        <span style="font-weight: 800; color: var(--accent); margin-bottom: 4px;">🔄 Her Derse Akşam Tekrarı</span>
+                        <span style="font-size: 11px; font-weight: 400; color: var(--text-muted);">Her dersin gününe 45 dakikalık bir akşam tekrarı atar.</span>
+                    </button>
+                    <button class="btn btn-ghost btn-full" onclick="applyStrategy('spaced')" style="justify-content: flex-start; text-align: left; height: auto; padding: 14px 20px; flex-direction: column; align-items: flex-start;">
+                        <span style="font-weight: 800; color: var(--accent); margin-bottom: 4px;">📈 Unutma Eğrisi Metodu (1-3-7)</span>
+                        <span style="font-size: 11px; font-weight: 400; color: var(--text-muted);">Öğrenilenleri kalıcı kılmak için 1, 3 ve 7 gün sonrasına tekrarlar böler.</span>
+                    </button>
+                </div>
+
+                <div class="section-label">Bugünün Tekrar Görevleri</div>
+                <div id="smart-tasks-list" style="display:flex; flex-direction:column; gap:8px; margin-bottom: 16px;"></div>
+
+                <div class="section-label">Manuel Tekrar Görevi Ekle</div>
+                <div class="inline-form">
+                    <input id="manualTaskName" type="text" placeholder="Görev Adı" class="input-field">
+                    <input id="manualTaskMin" type="number" placeholder="dk" class="custom-time-input">
+                    <button class="btn btn-primary btn-small" onclick="addManualSmartTask()">Ekle</button>
+                </div>
+            </div>
+        </div>
+
+        <!-- MODAL: EKRAN SÜRESİ RAPORU -->
+        <div id="usage-modal" class="modal-overlay">
+            <div class="modal-box">
+                <button class="modal-close" onclick="closeModal('usage-modal')">×</button>
+                <div class="modal-title">Günlük Ekran Süresi Raporu</div>
+                <div class="modal-desc">Kara listedeki kısıtlanmış uygulamaların bugünkü kullanım süreleri.</div>
+                <table class="report-table">
+                    <thead>
+                        <tr>
+                            <th>Uygulama</th>
+                            <th>Toplam Kullanım Süresi</th>
+                        </tr>
+                    </thead>
+                    <tbody id="usage-table-body">
+                        <!-- Rendered via JS -->
+                    </tbody>
+                </table>
+            </div>
+        </div>
+
+        <!-- MODAL: GÜNÜ BİTİR RAPORU -->
+        <div id="endday-modal" class="modal-overlay">
+            <div class="modal-box modal-wide">
+                <button class="modal-close" onclick="closeModal('endday-modal')">×</button>
+                <div class="modal-title">Gün Sonu Protokolü</div>
+                <div class="modal-desc"><strong id="endday-stat">0</strong> dakika odaklandın. Günü bilinçli kapat ve yarına temiz başla.</div>
+                <div id="endday-message" class="insight-banner"></div>
+                <div class="form-grid-2">
+                    <div>
+                        <label class="section-label" for="endday-wins">Bugünün kazanımları</label>
+                        <textarea id="endday-wins" class="input-field compact-textarea" placeholder="Neyi iyi yaptın?"></textarea>
+                    </div>
+                    <div>
+                        <label class="section-label" for="endday-blockers">Seni ne engelledi?</label>
+                        <textarea id="endday-blockers" class="input-field compact-textarea" placeholder="Yarın neyi değiştireceksin?"></textarea>
+                    </div>
+                </div>
+                <label class="section-label" for="endday-first-task">Yarının ilk odak görevi</label>
+                <input id="endday-first-task" class="input-field" placeholder="Sabah ilk başlayacağın iş">
+                <div class="section-label">Yarına taşınacak görevler</div>
+                <div id="endday-carry-list" class="selection-list"></div>
+                <button class="btn btn-primary btn-full" onclick="finalizeDayReview()">Günü Kapat ve Yarını Hazırla</button>
+            </div>
+        </div>
+
+        <!-- POPUP FALLBACK CHECK-IN OVERLAY (In case Always-On-Top fails) -->
+        <div id="checkin-overlay" class="checkin-overlay">
+            <div class="checkin-box">
+                <div class="checkin-icon">⏳</div>
+                <div class="checkin-title">Hala Çalışıyor musun?</div>
+                <div class="checkin-desc">Odaklanmaya devam edip etmediğinizi doğrulamak için lütfen onaylayın.</div>
+                <div id="checkin-countdown" class="checkin-countdown">10</div>
+                <div class="checkin-actions">
+                    <button class="btn btn-success" onclick="checkinYes()">Evet, Çalışıyorum</button>
+                    <button class="btn btn-danger" onclick="checkinNo()">Hayır, Durdur</button>
+                </div>
+            </div>
+        </div>
+        <!-- MODAL: GÜNLÜK DEFTERİ -->
+        <div id="journal-modal" class="modal-overlay">
+            <div class="journal-book-wrapper">
+                <div class="modal-box journal-box">
+                    <button class="modal-close" onclick="closeJournal()">×</button>
+                    <div class="journal-header">
+                        <div class="journal-title-row">
+                            <span class="journal-emoji">📓</span>
+                            <div class="modal-title">Günlük Defterim</div>
+                        </div>
+                        <div class="journal-date-nav">
+                            <button class="btn btn-ghost btn-small" onclick="journalPrevDay()">◀</button>
+                            <span id="journal-date-display" class="journal-date-text"></span>
+                            <button class="btn btn-ghost btn-small" onclick="journalNextDay()">▶</button>
+                        </div>
+                    </div>
+                    <textarea id="journal-textarea" class="journal-textarea" placeholder="Bugün neler oldu? Düşüncelerini, notlarını buraya yaz..."></textarea>
+                    <button class="btn btn-primary btn-full" onclick="saveJournalNote()" style="margin-bottom: 16px;">💾 Kaydet</button>
+                    
+                    <div class="section-label">Geçmiş Notlarım</div>
+                    <div id="journal-history" class="journal-history"></div>
+                </div>
+            </div>
+        </div>
+
+        <!-- MODAL: ODAK SKORU -->
+        <div id="focus-score-modal" class="modal-overlay">
+            <div class="modal-box modal-center focus-score-box">
+                <div class="modal-title">Bu seansı nasıl değerlendirirsin?</div>
+                <div class="star-rating" id="star-rating">
+                    <span class="star" data-score="1" onclick="selectFocusScore(1)">⭐</span>
+                    <span class="star" data-score="2" onclick="selectFocusScore(2)">⭐</span>
+                    <span class="star" data-score="3" onclick="selectFocusScore(3)">⭐</span>
+                    <span class="star" data-score="4" onclick="selectFocusScore(4)">⭐</span>
+                    <span class="star" data-score="5" onclick="selectFocusScore(5)">⭐</span>
+                </div>
+                <div id="focus-score-timer" class="focus-score-timer">10</div>
+                <button class="btn btn-primary btn-full" onclick="saveFocusScore()">Kaydet</button>
+            </div>
+        </div>
+
+        <!-- MODAL: HAFTALIK DEĞERLENDİRME -->
+        <div id="weekly-review-modal" class="modal-overlay">
+            <div class="modal-box weekly-review-box">
+                <button class="modal-close" onclick="closeWeeklyReview()">×</button>
+                <div class="modal-title">📊 Haftalık Değerlendirme</div>
+                <div class="modal-desc">Geçen haftanın performans özeti</div>
+
+                <div id="weekly-stats-grid" class="weekly-stats-grid"></div>
+
+                <div class="section-label" style="margin-top: 20px;">Bu hafta ne üzerine çalışacaksın?</div>
+                <div style="display:flex; flex-direction:column; gap:8px; margin-bottom:16px;">
+                    <input id="priority-1" type="text" placeholder="Öncelik 1" class="input-field">
+                    <input id="priority-2" type="text" placeholder="Öncelik 2" class="input-field">
+                    <input id="priority-3" type="text" placeholder="Öncelik 3" class="input-field">
+                </div>
+                <button class="btn btn-primary btn-full" onclick="startWeek()" style="margin-bottom: 8px;">🚀 Haftaya Başla</button>
+                <button class="btn btn-ghost btn-full" onclick="closeWeeklyReview()">Atla</button>
+            </div>
+        </div>
+        <!-- ============================================= -->
+        <!-- YOL HARİTASI (ROADMAP) TAM SAYFA GÖRÜNÜM -->
+        <!-- ============================================= -->
+        <div id="routines-view" class="routines-view">
+            <div class="routines-topbar">
                 <div>
-                    <div class="panel-title">Haftalık ritim</div>
-                    <p class="panel-subtitle">Son 7 gün toplam odaklanma dakikaları</p>
+                    <div class="routines-title">☀️ Rutinler</div>
+                    <div class="routines-subtitle">Günün tekrar eden adımlarını tek yerden oluştur, düzenle ve yönet.</div>
                 </div>
-                <button class="btn btn-ghost btn-small" onclick="openAllTimeModal()">Tüm zamanlar</button>
+                <button class="btn btn-ghost" onclick="closeRoutines()">← Aktif Odağa Dön</button>
             </div>
-            <div id="historyChart" class="chart-container"></div>
-        </section>
+            <div class="routines-workspace">
+                <section class="routine-editor-card">
+                    <div class="routine-card-heading" id="routine-editor-title">Yeni rutin oluştur</div>
+                    <div id="routine-form-host"></div>
+                    <button id="routine-edit-cancel" class="btn btn-ghost btn-full" style="display:none;" onclick="resetRoutineEditor()">Düzenlemeyi İptal Et</button>
+                </section>
+                <section class="routine-manager-card">
+                    <div class="routine-manager-heading">
+                        <div>
+                            <div class="routine-card-heading">Tüm rutinler</div>
+                            <div class="modal-desc">Bir rutini düzenleyebilir veya kalıcı olarak silebilirsin.</div>
+                        </div>
+                        <span id="routine-manager-count" class="routine-count-badge">0 rutin</span>
+                    </div>
+                    <div id="routine-manager-list" class="routine-manager-list"></div>
+                </section>
+            </div>
+        </div>
+
+        <div id="roadmap-view" class="roadmap-view">
+            <!-- Top Bar -->
+            <div class="roadmap-topbar">
+                <div class="roadmap-topbar-left">
+                    <button class="btn btn-ghost btn-small" onclick="closeRoadmap()" style="margin-right:12px;">← Geri</button>
+                    <span class="roadmap-topbar-title">🗺️ Yol Haritası</span>
+                </div>
+                <div class="roadmap-topbar-right">
+                    <button class="btn btn-ghost btn-small" onclick="openQuickRoadmapModal()">⚡ Hızlı Ekle</button>
+                    <button class="btn btn-primary btn-small" onclick="openAddProgramModal()">+ Yeni Yol Haritası</button>
+                </div>
+            </div>
+
+            <!-- Program Cards Container -->
+            <div id="roadmap-content" class="roadmap-content">
+                <button class="roadmap-quick-import-banner" type="button" onclick="openQuickRoadmapModal()">
+                    <span class="roadmap-quick-import-icon">⚡</span>
+                    <span class="roadmap-quick-import-copy">
+                        <strong>Metinden Hızlı Yol Haritası</strong>
+                        <small>Numaralı içeriği yapıştır; alt program, faz ve konular otomatik oluşsun.</small>
+                    </span>
+                    <span class="roadmap-quick-import-action">Hızlı Ekle →</span>
+                </button>
+                <!-- Empty State -->
+                <div id="roadmap-empty" class="roadmap-empty">
+                    <div class="roadmap-empty-icon">🗺️</div>
+                    <div class="roadmap-empty-title">Henüz bir program oluşturmadın</div>
+                    <div class="roadmap-empty-desc">Çalışma programını adım adım planlamak için yeni bir program ekle.</div>
+                    <div class="roadmap-empty-actions">
+                        <button class="btn btn-ghost" onclick="openQuickRoadmapModal()">⚡ Metinden Hızlı Oluştur</button>
+                        <button class="btn btn-primary" onclick="openAddProgramModal()">+ İlk Programı Oluştur</button>
+                    </div>
+                </div>
+                <!-- Programs render here -->
+                <div id="roadmap-programs-list" class="roadmap-programs-list"></div>
+            </div>
+        </div>
+
+        <!-- MODAL: PROGRAM EKLE/DÜZENLE -->
+        <div id="roadmap-program-modal" class="modal-overlay">
+            <div class="modal-box">
+                <button class="modal-close" onclick="closeModal('roadmap-program-modal')">×</button>
+                <div class="modal-title" id="roadmap-program-modal-title">Yeni Yol Haritası Ekle</div>
+                <div class="modal-desc">Ana çalışma programını oluşturun (Örn: Bilgisayar Öğrenmek)</div>
+                <div class="inline-form" style="flex-direction: column; gap: 12px; margin-bottom: 0;">
+                    <div>
+                        <label class="section-label" style="margin: 0 0 6px; display: block;">Program Adı</label>
+                        <input id="roadmapProgramName" type="text" placeholder="Örn: Bilgisayar Öğrenmek" class="input-field">
+                    </div>
+                    <div>
+                        <label class="section-label" style="margin: 0 0 6px; display: block;">İkon</label>
+                        <div class="emoji-picker-grid" id="roadmap-program-emoji-picker">
+                            <button type="button" class="emoji-btn active" onclick="selectRoadmapEmoji(this, '📚')">📚</button>
+                            <button type="button" class="emoji-btn" onclick="selectRoadmapEmoji(this, '🖥️')">🖥️</button>
+                            <button type="button" class="emoji-btn" onclick="selectRoadmapEmoji(this, '🎵')">🎵</button>
+                            <button type="button" class="emoji-btn" onclick="selectRoadmapEmoji(this, '🎨')">🎨</button>
+                            <button type="button" class="emoji-btn" onclick="selectRoadmapEmoji(this, '🔬')">🔬</button>
+                            <button type="button" class="emoji-btn" onclick="selectRoadmapEmoji(this, '📐')">📐</button>
+                            <button type="button" class="emoji-btn" onclick="selectRoadmapEmoji(this, '🌍')">🌍</button>
+                            <button type="button" class="emoji-btn" onclick="selectRoadmapEmoji(this, '💻')">💻</button>
+                            <button type="button" class="emoji-btn" onclick="selectRoadmapEmoji(this, '🧠')">🧠</button>
+                            <button type="button" class="emoji-btn" onclick="selectRoadmapEmoji(this, '⚙️')">⚙️</button>
+                            <button type="button" class="emoji-btn" onclick="selectRoadmapEmoji(this, '🏗️')">🏗️</button>
+                            <button type="button" class="emoji-btn" onclick="selectRoadmapEmoji(this, '🚀')">🚀</button>
+                        </div>
+                    </div>
+                    <input type="hidden" id="roadmapProgramEditId" value="">
+                    <button class="btn btn-primary btn-full" onclick="saveRoadmapProgram()" style="margin-top: 10px;">KAYDET</button>
+                </div>
+            </div>
+        </div>
+
+        <!-- MODAL: METİNDEN HIZLI YOL HARİTASI -->
+        <div id="quick-roadmap-modal" class="modal-overlay">
+            <div class="modal-box modal-xwide quick-roadmap-modal-box">
+                <button class="modal-close" onclick="closeModal('quick-roadmap-modal')">×</button>
+                <div class="modal-title">⚡ Metinden Hızlı Yol Haritası</div>
+                <div class="modal-desc">Numaralı içeriği yapıştır. En derin başlıklar konu, bir üstleri faz, daha üstleri alt program olur. Tekrarlanan satırlar otomatik temizlenir.</div>
+                <div class="quick-roadmap-grid">
+                    <section class="quick-roadmap-input-panel">
+                        <label class="section-label" for="quickRoadmapName">Yol Haritası Adı</label>
+                        <input id="quickRoadmapName" class="input-field" placeholder="Boş bırakırsan metinden tahmin edilir" oninput="updateQuickRoadmapPreview()">
+                        <label class="section-label" for="quickRoadmapText">Numaralı İçerik</label>
+                        <textarea id="quickRoadmapText" class="input-field quick-roadmap-textarea"
+                                  placeholder="1.0 Giriş&#10;1.1 Temel Kavramlar&#10;1.1.1 İlk Konu&#10;1.1.2 İkinci Konu"
+                                  oninput="updateQuickRoadmapPreview()"></textarea>
+                    </section>
+                    <section class="quick-roadmap-preview-panel" aria-live="polite">
+                        <div class="quick-roadmap-preview-heading">
+                            <span>Otomatik Önizleme</span>
+                            <div id="quick-roadmap-counts" class="quick-roadmap-counts"></div>
+                        </div>
+                        <div id="quick-roadmap-preview" class="quick-roadmap-preview-empty">
+                            Metni yapıştırdığında hiyerarşi burada görünür.
+                        </div>
+                    </section>
+                </div>
+                <div id="quick-roadmap-status" class="quick-roadmap-status"></div>
+                <button id="quick-roadmap-create-btn" class="btn btn-primary btn-full" type="button"
+                        onclick="createQuickRoadmap()" disabled>Analiz Et ve Yol Haritasını Oluştur</button>
+            </div>
+        </div>
+
+        <!-- MODAL: ALT PROGRAM EKLE/DÜZENLE -->
+        <div id="roadmap-sub-modal" class="modal-overlay">
+            <div class="modal-box">
+                <button class="modal-close" onclick="closeModal('roadmap-sub-modal')">×</button>
+                <div class="modal-title" id="roadmap-sub-modal-title">Alt Program Ekle</div>
+                <div class="modal-desc">Ana programın alt dalını oluşturun (Örn: Donanım, Yazılım)</div>
+                <div class="inline-form" style="flex-direction: column; gap: 12px; margin-bottom: 0;">
+                    <div>
+                        <label class="section-label" style="margin: 0 0 6px; display: block;">Alt Program Adı</label>
+                        <input id="roadmapSubName" type="text" placeholder="Örn: Donanım" class="input-field">
+                    </div>
+                    <div>
+                        <label class="section-label" style="margin: 0 0 6px; display: block;">İkon</label>
+                        <div class="emoji-picker-grid" id="roadmap-sub-emoji-picker">
+                            <button type="button" class="emoji-btn active" onclick="selectRoadmapSubEmoji(this, '📂')">📂</button>
+                            <button type="button" class="emoji-btn" onclick="selectRoadmapSubEmoji(this, '🔧')">🔧</button>
+                            <button type="button" class="emoji-btn" onclick="selectRoadmapSubEmoji(this, '💾')">💾</button>
+                            <button type="button" class="emoji-btn" onclick="selectRoadmapSubEmoji(this, '🖥️')">🖥️</button>
+                            <button type="button" class="emoji-btn" onclick="selectRoadmapSubEmoji(this, '📱')">📱</button>
+                            <button type="button" class="emoji-btn" onclick="selectRoadmapSubEmoji(this, '🌐')">🌐</button>
+                            <button type="button" class="emoji-btn" onclick="selectRoadmapSubEmoji(this, '🔌')">🔌</button>
+                            <button type="button" class="emoji-btn" onclick="selectRoadmapSubEmoji(this, '📡')">📡</button>
+                            <button type="button" class="emoji-btn" onclick="selectRoadmapSubEmoji(this, '🧩')">🧩</button>
+                            <button type="button" class="emoji-btn" onclick="selectRoadmapSubEmoji(this, '🎮')">🎮</button>
+                            <button type="button" class="emoji-btn" onclick="selectRoadmapSubEmoji(this, '🛠️')">🛠️</button>
+                            <button type="button" class="emoji-btn" onclick="selectRoadmapSubEmoji(this, '📊')">📊</button>
+                        </div>
+                    </div>
+                    <input type="hidden" id="roadmapSubEditId" value="">
+                    <input type="hidden" id="roadmapSubParentId" value="">
+                    <button class="btn btn-primary btn-full" onclick="saveRoadmapSubprogram()" style="margin-top: 10px;">KAYDET</button>
+                </div>
+            </div>
+        </div>
+
+        <!-- MODAL: FAZ EKLE/DÜZENLE -->
+        <div id="roadmap-phase-modal" class="modal-overlay">
+            <div class="modal-box">
+                <button class="modal-close" onclick="closeModal('roadmap-phase-modal')">×</button>
+                <div class="modal-title" id="roadmap-phase-modal-title">Yeni Faz Ekle</div>
+                <div class="modal-desc">Çalışma aşamasını belirleyin (Örn: Faz 1 — Temel Kavramlar)</div>
+                <div class="inline-form" style="flex-direction: column; gap: 12px; margin-bottom: 0;">
+                    <div>
+                        <label class="section-label" style="margin: 0 0 6px; display: block;">Faz Adı</label>
+                        <input id="roadmapPhaseName" type="text" placeholder="Örn: Faz 1 — Temel Kavramlar" class="input-field">
+                    </div>
+                    <input type="hidden" id="roadmapPhaseEditId" value="">
+                    <input type="hidden" id="roadmapPhaseParentId" value="">
+                    <button class="btn btn-primary btn-full" onclick="saveRoadmapPhase()" style="margin-top: 10px;">KAYDET</button>
+                </div>
+            </div>
+        </div>
+
+        <!-- MODAL: KONU EKLE/DÜZENLE -->
+        <div id="roadmap-topic-modal" class="modal-overlay">
+            <div class="modal-box">
+                <button class="modal-close" onclick="closeModal('roadmap-topic-modal')">×</button>
+                <div class="modal-title" id="roadmap-topic-modal-title">Yeni Konu Ekle</div>
+                <div class="modal-desc">Öğrenilecek konuyu ekleyin</div>
+                <div class="inline-form" style="flex-direction: column; gap: 12px; margin-bottom: 0;">
+                    <div>
+                        <label class="section-label" style="margin: 0 0 6px; display: block;">Konu Başlığı</label>
+                        <input id="roadmapTopicTitle" type="text" placeholder="Örn: Pointer temeli" class="input-field">
+                    </div>
+                    <div>
+                        <label class="section-label" style="margin: 0 0 6px; display: block;">Açıklama (opsiyonel)</label>
+                        <input id="roadmapTopicDesc" type="text" placeholder="Örn: malloc, free, double pointer" class="input-field">
+                    </div>
+                    <div class="form-grid-2">
+                        <div>
+                            <label class="section-label" for="roadmapTopicEstimate">Tahmini Süre (dk)</label>
+                            <input id="roadmapTopicEstimate" type="number" min="1" value="60" class="input-field">
+                        </div>
+                        <div>
+                            <label class="section-label" for="roadmapTopicDueDate">Hedef Tarih</label>
+                            <input id="roadmapTopicDueDate" type="date" class="input-field">
+                        </div>
+                        <div>
+                            <label class="section-label" for="roadmapTopicPriority">Öncelik</label>
+                            <select id="roadmapTopicPriority" class="input-field">
+                                <option value="1">P1 — Kritik</option>
+                                <option value="2" selected>P2 — Yüksek</option>
+                                <option value="3">P3 — Normal</option>
+                                <option value="4">P4 — Düşük</option>
+                            </select>
+                        </div>
+                        <div>
+                            <label class="section-label" for="roadmapTopicDifficulty">Zorluk</label>
+                            <select id="roadmapTopicDifficulty" class="input-field">
+                                <option value="1">1 — Kolay</option>
+                                <option value="2">2</option>
+                                <option value="3" selected>3 — Orta</option>
+                                <option value="4">4</option>
+                                <option value="5">5 — Zor</option>
+                            </select>
+                        </div>
+                    </div>
+                    <input type="hidden" id="roadmapTopicEditId" value="">
+                    <input type="hidden" id="roadmapTopicParentId" value="">
+                    <button class="btn btn-primary btn-full" onclick="saveRoadmapTopic()" style="margin-top: 10px;">KAYDET</button>
+                </div>
+            </div>
+        </div>
+
+        <!-- MODAL: HAFTALIK PLANLAYICI -->
+        <div id="planner-modal" class="modal-overlay">
+            <div class="modal-box modal-xwide">
+                <button class="modal-close" onclick="closeModal('planner-modal')">×</button>
+                <div class="modal-title">📅 Haftalık Planlayıcı</div>
+                <div class="modal-desc">Yol haritasını bu haftanın gerçek kapasitesine dönüştür.</div>
+                <div class="planner-toolbar">
+                    <input id="planner-title" class="input-field" placeholder="Yeni plan öğesi">
+                    <input id="planner-date" type="date" class="input-field">
+                    <input id="planner-duration" type="number" min="1" value="45" class="input-field" title="Dakika">
+                    <select id="planner-priority" class="input-field">
+                        <option value="1">P1</option><option value="2" selected>P2</option>
+                        <option value="3">P3</option><option value="4">P4</option>
+                    </select>
+                    <button class="btn btn-primary" onclick="addPlannerItem()">Ekle</button>
+                </div>
+                <div id="planner-week-label" class="section-label"></div>
+                <div id="planner-board" class="planner-board"></div>
+                <div class="planner-schedule-panel">
+                    <div class="section-label">Tekrarlayan Ders Programı</div>
+                    <div class="modal-desc">Her satır: gün, ders ve süre. Kaydettiğinde yalnızca bugünün eksik görevi oluşturulur; kopya üretmez.</div>
+                    <div id="schedule-entries" class="schedule-entries"></div>
+                    <div class="inline-actions">
+                        <button class="btn btn-ghost" onclick="addScheduleRow()">+ Ders Satırı</button>
+                        <button class="btn btn-primary" onclick="saveWeeklySchedule()">Programı Kaydet</button>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- MODAL: YOL HARİTASI KONUSUNU PLANLA -->
+        <div id="schedule-topic-modal" class="modal-overlay">
+            <div class="modal-box">
+                <button class="modal-close" onclick="closeModal('schedule-topic-modal')">×</button>
+                <div class="modal-title">Konuyu Haftaya Planla</div>
+                <div id="schedule-topic-name" class="modal-desc"></div>
+                <input id="schedule-topic-id" type="hidden">
+                <label class="section-label" for="schedule-topic-date">Çalışma tarihi</label>
+                <input id="schedule-topic-date" type="date" class="input-field">
+                <label class="section-label" for="schedule-topic-duration">Süre (dk)</label>
+                <input id="schedule-topic-duration" type="number" min="1" class="input-field">
+                <label class="section-label" for="schedule-topic-priority">Öncelik</label>
+                <select id="schedule-topic-priority" class="input-field">
+                    <option value="1">P1 — Kritik</option><option value="2">P2 — Yüksek</option>
+                    <option value="3">P3 — Normal</option><option value="4">P4 — Düşük</option>
+                </select>
+                <button class="btn btn-primary btn-full" onclick="scheduleRoadmapTopic()">Planla ve Görev Oluştur</button>
+            </div>
+        </div>
+
+        <!-- MODAL: DİSİPLİN PANELİ -->
+        <div id="discipline-modal" class="modal-overlay">
+            <div class="modal-box modal-wide">
+                <button class="modal-close" onclick="closeModal('discipline-modal')">×</button>
+                <div class="modal-title">🎯 Disiplin Paneli</div>
+                <div class="modal-desc">Dakika toplamından fazlası: plan uyumu, odak kalitesi ve davranış tutarlılığı.</div>
+                <div id="discipline-metrics" class="discipline-grid"></div>
+                <div id="discipline-insight" class="insight-banner"></div>
+            </div>
+        </div>
+
+        <!-- MODAL: PROFİL, DİKKAT VE VERİ -->
+        <div id="preferences-modal" class="modal-overlay">
+            <div class="modal-box modal-xwide">
+                <button class="modal-close" onclick="closeModal('preferences-modal')">×</button>
+                <div class="modal-title">⚙️ Profil ve Veri Merkezi</div>
+                <div class="settings-columns">
+                    <section>
+                        <div class="section-label">Kişisel Hedef</div>
+                        <label class="section-label" for="pref-user-name">Adın</label>
+                        <input id="pref-user-name" class="input-field" placeholder="Adın">
+                        <label class="section-label" for="pref-daily-target">Günlük hedef (dk)</label>
+                        <input id="pref-daily-target" type="number" min="1" class="input-field" value="60">
+                        <button class="btn btn-primary btn-full" onclick="savePreferences()">Ayarları Kaydet</button>
+                    </section>
+                    <section>
+                        <div class="section-label">Dikkat Profilleri</div>
+                        <div id="focus-profile-list" class="profile-list"></div>
+                        <div class="inline-actions">
+                            <input id="new-profile-name" class="input-field" placeholder="Yeni profil adı">
+                            <button class="btn btn-ghost" onclick="createFocusProfile()">Ekle</button>
+                        </div>
+                        <div class="profile-config-grid">
+                            <label>İzin süresi (sn)<input id="profile-grace" type="number" min="0" value="120" class="input-field"></label>
+                            <label>Check-in (dk)<input id="profile-checkin" type="number" min="0" value="10" class="input-field"></label>
+                            <label class="toggle-label"><input id="profile-focus-only" type="checkbox" checked> Yalnızca odak sırasında uygula</label>
+                            <label class="toggle-label"><input id="profile-pause-on-lock" type="checkbox" checked> Windows kilitlendiğinde kronometreyi duraklat</label>
+                        </div>
+                        <button class="btn btn-ghost btn-full" onclick="saveActiveProfileConfig()">Aktif Profili Güncelle</button>
+                    </section>
+                    <section>
+                        <div class="section-label">Yedekleme ve Dışa Aktarma</div>
+                        <div class="inline-actions">
+                            <button class="btn btn-primary" onclick="createBackup()">Yedek Oluştur</button>
+                            <button class="btn btn-ghost" onclick="exportAllData()">JSON + CSV Aktar</button>
+                        </div>
+                        <div id="backup-status" class="modal-desc"></div>
+                        <div id="backup-list" class="backup-list"></div>
+                    </section>
+                </div>
+            </div>
+        </div>
     </main>
 
-    <div id="schedule-modal" class="modal-overlay">
-        <div class="modal-box modal-wide">
-            <button class="modal-close" onclick="closeModal('schedule-modal')">×</button>
-            <div class="modal-title">Haftalık ders programı</div>
-            <div class="modal-desc">Derslerini gir. Focus OS bugün hangi derslerin olduğunu otomatik takip eder.</div>
-
-            <div class="schedule-tabs" id="schedule-tabs"></div>
-            <div id="schedule-entries"></div>
-
-            <div class="modal-actions">
-                <button class="btn btn-ghost btn-small" onclick="addScheduleRow()">Ders ekle</button>
-                <button class="btn btn-success btn-small" id="schedSaveBtn" onclick="saveSchedule()">Kaydet ve görev oluştur</button>
-            </div>
-        </div>
-    </div>
-
-    <div id="smart-modal" class="modal-overlay">
-        <div class="modal-box">
-            <button class="modal-close" onclick="closeModal('smart-modal')">×</button>
-            <div class="modal-title">Akıllı tekrar asistanı</div>
-            <div class="modal-desc">Bugünkü derslerine göre çalışma planı oluştur.</div>
-
-            <div id="today-lessons-info" class="modal-info"></div>
-
-            <div class="strategy-card" onclick="applyStrategy('daily')">
-                <div class="strategy-title">Her derse akşam tekrar</div>
-                <div class="strategy-desc">Her dersin gününe 45 dakikalık tekrar görevi atar.</div>
-            </div>
-            <div class="strategy-card" onclick="applyStrategy('spaced')">
-                <div class="strategy-title">Unutma eğrisi (1-3-7)</div>
-                <div class="strategy-desc">Tekrarları 1, 3 ve 7. günlere böler.</div>
-            </div>
-            <div class="strategy-card" onclick="applyStrategy('none')">
-                <div class="strategy-title">Manuel tekrar</div>
-                <div class="strategy-desc">Sadece kendi görevlerini manuel gir.</div>
-            </div>
-
-            <div class="section-label">Bugünkü tekrar görevleri</div>
-            <div id="smart-tasks-list"></div>
-
-            <div class="inline-form">
-                <input id="manualTaskName" type="text" placeholder="Görev adı" class="input-field">
-                <input id="manualTaskMin" type="number" placeholder="dk" class="custom-time-input">
-                <button class="btn btn-primary btn-small" onclick="addManualSmartTask()">Ekle</button>
-            </div>
-        </div>
-    </div>
-
-    <div id="usage-modal" class="modal-overlay">
-        <div class="modal-box">
-            <button class="modal-close" onclick="closeModal('usage-modal')">×</button>
-            <div class="modal-title">Günlük ekran süresi raporu</div>
-            <div class="modal-desc">Kara listedeki uygulamaların bugünkü kullanım süreleri.</div>
-            <table class="report-table">
-                <thead><tr><th>Uygulama</th><th>Toplam süre</th></tr></thead>
-                <tbody id="usage-table-body"></tbody>
-            </table>
-        </div>
-    </div>
-
-    <div id="endday-modal" class="modal-overlay">
-        <div class="modal-box modal-center">
-            <button class="modal-close" onclick="closeModal('endday-modal')">×</button>
-            <div class="modal-title">Gün sona erdi</div>
-            <div id="endday-stat" class="end-day-stat">0</div>
-            <div class="end-day-unit">dakika odaklandın</div>
-            <div id="endday-message" class="end-day-message"></div>
-            <button class="btn btn-primary" onclick="closeModal('endday-modal')">Tamam</button>
-        </div>
-    </div>
-
-    <div id="alltime-modal" class="modal-overlay">
-        <div class="modal-box modal-narrow">
-            <button class="modal-close" onclick="closeModal('alltime-modal')">×</button>
-            <div class="modal-title">Tüm zamanların verileri</div>
-            <div class="modal-desc">Uygulamanın kullanıldığı ilk günden beri çalışma logları.</div>
-            <table class="report-table">
-                <thead><tr><th>Tarih</th><th>Gün</th><th>Toplam (dk)</th></tr></thead>
-                <tbody id="alltime-table-body"></tbody>
-            </table>
-        </div>
-    </div>
-
-    <div id="checkin-overlay" class="checkin-overlay">
-        <div class="checkin-box">
-            <div class="checkin-icon">Kontrol</div>
-            <div class="checkin-title">Hala çalışıyor musun?</div>
-            <div class="checkin-desc">10 saniye içinde onaylamazsan sayaç duraklatılacak.</div>
-            <div id="checkin-countdown" class="checkin-countdown">10</div>
-            <div class="checkin-actions">
-                <button class="btn btn-success" onclick="checkinYes()">Evet, çalışıyorum</button>
-                <button class="btn btn-danger" onclick="checkinNo()">Hayır</button>
-            </div>
-        </div>
-    </div>
-
-    <script src="app.js"></script>
+    <script src="roadmap_parser.js?v=1"></script>
+    <script src="app.js?v=6"></script>
+    <script src="autocomplete.js?v=1"></script>
 </body>
 </html>

@@ -1,6 +1,5 @@
 import psutil
 import time
-import os
 import database
 
 class ProcessGuardian:
@@ -8,7 +7,12 @@ class ProcessGuardian:
         self.active_threats = {}  # { app_name: start_time }
         
     def scan_and_enforce(self):
-        blacklist = database.get_blacklist()
+        config = database.get_enforcement_config()
+        if not config.get("enabled"):
+            self.active_threats.clear()
+            return []
+        blacklist = set(config.get("apps", []))
+        grace_seconds = max(1, int(config.get("grace_seconds", 120)))
         
         # Çoklu İşlem Desteği: Aynı uygulama birden fazla process açabilir
         # set() ile grupla, tek uygulama gibi say
@@ -43,27 +47,21 @@ class ProcessGuardian:
         for app in found_apps:
             elapsed_time = time.time() - self.active_threats[app]
             
-            if elapsed_time >= 120: 
+            if elapsed_time >= grace_seconds:
                 # SÜRE DOLDU: Tüm eşleşen process'leri öldür
-                try:
-                    # Windows'un acımasız taskkill komutu
-                    os.system(f"taskkill /F /IM {app} >nul 2>&1")
-                    # Ekstra garanti: psutil ile de tüm process'leri vur
-                    for proc in process_map.get(app, []):
-                        try:
-                            proc.kill()
-                        except:
-                            pass
-                except:
-                    pass
+                for proc in process_map.get(app, []):
+                    try:
+                        proc.kill()
+                    except (psutil.NoSuchProcess, psutil.AccessDenied, psutil.ZombieProcess):
+                        pass
                 
                 alerts.append({"type": "kill", "app": app})
                 
                 if app in self.active_threats:
                     del self.active_threats[app]
                     
-            elif elapsed_time >= 110: 
-                remaining = 120 - int(elapsed_time)
+            elif elapsed_time >= max(0, grace_seconds - 10):
+                remaining = grace_seconds - int(elapsed_time)
                 alerts.append({"type": "countdown", "app": app, "time": remaining})
             elif 0 < elapsed_time < 2: 
                 alerts.append({"type": "warning", "app": app})
@@ -75,7 +73,8 @@ class ProcessGuardian:
         status = {}
         for app, start_time in self.active_threats.items():
             elapsed = time.time() - start_time
-            remaining = int(120 - elapsed)
+            config = database.get_enforcement_config()
+            remaining = int(config.get("grace_seconds", 120) - elapsed)
             if remaining < 0:
                 remaining = 0
             status[app] = remaining

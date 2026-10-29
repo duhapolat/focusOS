@@ -77,6 +77,12 @@ class CheckinManager:
         self._response_received.set()  # Beklemeyi kır
         print("[CheckinManager] El Sallama modu KAPALI")
     
+    def set_interval(self, seconds):
+        """Aralığı dinamik olarak günceller (dakika cinsinden UI'dan gelen değer saniyeye çevrilmiş olmalı)."""
+        if seconds > 0:
+            self.interval_seconds = seconds
+            print(f"[CheckinManager] Aralık güncellendi: {seconds}s ({seconds // 60}dk)")
+    
     def confirm(self):
         """Kullanıcı 'Evet' dediğinde çağrılır."""
         self._user_said_yes = True

@@ -1,0 +1,148 @@
+<!DOCTYPE html>
+<html lang="tr">
+<head>
+    <meta charset="UTF-8">
+    <title>Focus OS - Kontrol</title>
+    <style>
+        @import url('https://fonts.googleapis.com/css2?family=Inter:wght@500;700;800;900&display=swap');
+
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: 'Inter', -apple-system, BlinkMacSystemFont, sans-serif;
+            background: #07090E;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            height: 100vh;
+            overflow: hidden;
+            -webkit-font-smoothing: antialiased;
+            user-select: none;
+            color: #F8FAFC;
+        }
+
+        .popup-card {
+            text-align: center;
+            padding: 24px;
+            width: 100%;
+            max-width: 360px;
+            background: #11151D;
+            border: 1px solid rgba(255, 255, 255, 0.05);
+            border-radius: 12px;
+            box-shadow: 0 20px 40px rgba(0, 0, 0, 0.5);
+        }
+
+        .popup-icon {
+            font-size: 28px;
+            margin-bottom: 12px;
+        }
+
+        .popup-question {
+            font-size: 18px;
+            font-weight: 800;
+            color: #F8FAFC;
+            margin-bottom: 6px;
+            letter-spacing: -0.01em;
+        }
+
+        .popup-timer {
+            font-size: 12px;
+            font-weight: 700;
+            color: #94A3B8;
+            margin-bottom: 22px;
+        }
+
+        .popup-timer span {
+            color: #EBBF4A;
+            font-weight: 900;
+            font-variant-numeric: tabular-nums;
+        }
+
+        .popup-actions {
+            display: flex;
+            gap: 12px;
+        }
+
+        .btn {
+            flex: 1;
+            height: 42px;
+            border: none;
+            border-radius: 8px;
+            font-family: inherit;
+            font-size: 13px;
+            font-weight: 800;
+            cursor: pointer;
+            transition: transform 0.15s ease, box-shadow 0.15s ease, opacity 0.15s ease;
+            letter-spacing: 0.01em;
+        }
+
+        .btn:active {
+            transform: scale(0.97);
+        }
+
+        .btn-yes {
+            background: #EBBF4A;
+            color: #07090E;
+            box-shadow: 0 4px 12px rgba(235, 191, 74, 0.2);
+        }
+
+        .btn-yes:hover {
+            background: #F5D06A;
+            box-shadow: 0 6px 16px rgba(235, 191, 74, 0.3);
+        }
+
+        .btn-no {
+            background: #EF4444;
+            color: #fff;
+            box-shadow: 0 4px 12px rgba(239, 68, 68, 0.2);
+        }
+
+        .btn-no:hover {
+            background: #dc2626;
+            box-shadow: 0 6px 16px rgba(239, 68, 68, 0.3);
+        }
+    </style>
+</head>
+<body>
+    <div class="popup-card">
+        <div class="popup-icon">⏳</div>
+        <div class="popup-question">Çalışıyor musun?</div>
+        <div class="popup-timer">Otomatik kapanış: <span id="countdown">10</span>s</div>
+        <div class="popup-actions">
+            <button class="btn btn-yes" onclick="handleYes()">Evet, Çalışıyorum</button>
+            <button class="btn btn-no" onclick="handleNo()">Hayır</button>
+        </div>
+    </div>
+
+    <script>
+        let timeLeft = 10;
+        const countdownEl = document.getElementById('countdown');
+
+        const timer = setInterval(() => {
+            timeLeft--;
+            countdownEl.textContent = timeLeft;
+            if (timeLeft <= 0) {
+                clearInterval(timer);
+            }
+        }, 1000);
+
+        function handleYes() {
+            clearInterval(timer);
+            if (window.pywebview && window.pywebview.api) {
+                window.pywebview.api.checkin_popup_yes();
+            }
+        }
+
+        function handleNo() {
+            clearInterval(timer);
+            if (window.pywebview && window.pywebview.api) {
+                window.pywebview.api.checkin_popup_no();
+            }
+        }
+    </script>
+</body>
+</html>

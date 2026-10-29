@@ -1,39 +1,40 @@
-# Focus OS Dagitim Notlari
+# FocusOS Dağıtım Notları
 
-Bu proje tek dosyalik Windows `.exe` olarak paketlenebilir. Karsi tarafa verdiginizde cift tiklayip ayni Focus OS arayuzunu acar.
+Bu proje tek dosyalık Windows `.exe` olarak paketlenir. Karşı tarafa verdiğinizde çift tıklayıp aynı FocusOS arayüzünü açar.
 
-## Veritabani nerede tutulur?
+## Veritabanı nerede tutulur?
 
-Uygulama artik `guardian.db` dosyasini proje klasorunden okumaz. Her kullanicinin verisi kendi Windows hesabinda olusur:
+Uygulama `guardian.db` dosyasını proje klasöründen okumaz. Her kullanıcının verisi kendi Windows hesabında oluşur:
 
 ```text
 %APPDATA%\FocusOS\guardian.db
 ```
 
-Bu sayede USB ile verdiginiz veya GitHub'dan indirilen uygulama sizin veritabani verinizi tasimaz. Karsi tarafta ilk acilista bos/kendine ait veritabani olusur.
+Yedekler `%APPDATA%\FocusOS\backups`, dışa aktarımlar `%APPDATA%\FocusOS\exports` altındadır. Bu sayede GitHub'dan indirilen uygulama sizin verinizi taşımaz; karşı tarafta ilk açılışta boş bir veritabanı oluşur.
 
-## EXE uretme
+## Yerelde EXE üretme
 
-Windows PowerShell'de proje klasorunde sunu calistirin:
+Windows PowerShell'de proje klasöründe şunu çalıştırın:
 
 ```powershell
 .\build_exe.ps1
 ```
 
-Cikti:
+Komut `requirements-dev.txt` içindeki bağımlılıkları (PyInstaller dahil) kurar ve `dist\FocusOS.exe` dosyasını üretir.
 
-```text
-dist\FocusOS.exe
+## GitHub Releases ile yayınlama (önerilen)
+
+`.github/workflows/release.yml`, `v` ile başlayan bir etiket gönderildiğinde testleri çalıştırır, `.exe` dosyasını derler ve bir GitHub Release'e ekler:
+
+```powershell
+git tag v1.0.0
+git push origin v1.0.0
 ```
 
-Karsi tarafa gondermeniz gereken dosya budur.
-
-## GitHub'a yuklerken
-
-`guardian.db`, `build/` ve `dist/` repoya eklenmemeli. Kaynak kodu GitHub'a koyun; hazir uygulama paylasmak icin GitHub Releases bolumune `dist\FocusOS.exe` yukleyin.
+`guardian.db`, `build/` ve `dist/` depoya eklenmemelidir (`.gitignore` bunları dışarıda tutar). Hazır uygulama yalnızca Releases üzerinden paylaşılır.
 
 ## Notlar
 
-Windows 10/11'de Microsoft Edge WebView2 Runtime genellikle hazir gelir. Acilmazsa karsi tarafta WebView2 Runtime kurulmasi gerekebilir.
-
-Veriyi ozel bir klasore almak isterseniz uygulamayi baslatmadan once `FOCUSOS_DATA_DIR` ortam degiskenini ayarlayabilirsiniz.
+- Windows 10/11'de Microsoft Edge WebView2 Runtime genellikle hazır gelir. Açılmazsa karşı tarafta WebView2 Runtime kurulması gerekir.
+- İmzasız `.exe` dosyaları için Windows SmartScreen uyarı verebilir; "Ek bilgi → Yine de çalıştır" ile açılabilir.
+- Veriyi özel bir klasöre almak için uygulamayı başlatmadan önce `FOCUSOS_DATA_DIR` ortam değişkenini ayarlayın.

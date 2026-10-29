@@ -1,2 +1,26 @@
+# Python
 __pycache__/
+*.py[cod]
+.pytest_cache/
+
+# Kullanıcı verisi (asla depoya girmemeli)
 *.db
+*.db-journal
+backups/
+exports/
+
+# Derleme çıktıları (hazır .exe GitHub Releases'a yüklenir)
+build/
+dist/
+main.spec
+
+# Arşivler ve yerel araç klasörleri
+*.rar
+*.zip
+*.7z
+.VSCodeCounter/
+.agents/
+.claude/
+.vscode/
+.idea/
+OdakGardiyani/

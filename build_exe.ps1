@@ -26,7 +26,7 @@ function Invoke-ProjectPython {
 
 Write-Host "Focus OS build basliyor..." -ForegroundColor Cyan
 Invoke-ProjectPython -m pip install --upgrade pip
-Invoke-ProjectPython -m pip install -r requirements.txt
+Invoke-ProjectPython -m pip install -r requirements-dev.txt
 Invoke-ProjectPython -m PyInstaller --clean --noconfirm FocusOS.spec
 
 Write-Host ""
